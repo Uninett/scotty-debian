@@ -18,9 +18,31 @@ Debian's Tcl policy names extension packages `tcl-<ext>`, hence `tcl-tnm`.
 
 ## Installing
 
-Normally you do not install this directly: `apt install ritz` pulls it in. See
-[zino-apt](https://github.com/Uninett/zino-apt) for the apt source, or
-[Releases](../../releases) for loose `.deb`s.
+Normally you do not install this directly; it is a dependency of
+[ritz](https://github.com/Uninett/ritz-debian), and the
+[ritz-debian README](https://github.com/Uninett/ritz-debian#installing) covers
+installing the pair together.
+
+To install it alone, download the `.deb` for your distribution from
+[Releases](../../releases) and:
+
+```sh
+sudo apt install ./tcl-tnm_*.deb
+```
+
+Or fetch it without a browser, with `SUITE` set to `trixie` for Debian 13 or
+`noble` for Ubuntu 24.04:
+
+```sh
+SUITE=trixie
+curl -fsSL https://api.github.com/repos/Uninett/scotty-debian/releases/latest \
+  | grep -o "https://[^\"]*\.${SUITE}1_[^\"]*\.deb" \
+  | grep -v dbgsym \
+  | xargs -r -n1 curl -fsSLOJ
+sudo apt install ./tcl-tnm_*.deb
+```
+
+Only amd64 is built.
 
 ## Building it yourself
 
