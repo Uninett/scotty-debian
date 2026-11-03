@@ -1,0 +1,33 @@
+Source: scotty
+Section: interpreters
+Priority: optional
+Maintainer: Morten Brekkevold <morten.brekkevold@sikt.no>
+Build-Depends:
+ debhelper-compat (= 13),
+ autoconf,
+ pkg-config,
+ rpcsvc-proto,
+ tcl-dev,
+ tk-dev,
+ libtirpc-dev,
+ zlib1g-dev,
+Standards-Version: 4.7.2
+Homepage: https://github.com/flightaware/scotty
+Rules-Requires-Root: no
+
+Package: tcl-tnm
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ tcl,
+Description: SNMP and MIB Tcl extension from the scotty project
+ The Tnm network-management Tcl extension gives Tcl scripts access to SNMP,
+ ICMP, DNS, NTP and related protocols, and a MIB compiler/loader for symbolic
+ OID handling.
+ .
+ This package is built from the FlightAware fork of scotty and exists mainly
+ to satisfy the "package require Tnm" dependency of the ritz Zino client,
+ since Debian no longer ships the historical scotty package. Only the Tcl
+ extension itself is shipped, not the standalone scotty interpreter or the
+ nmtrapd/nmicmpd daemons.

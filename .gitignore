@@ -4,3 +4,6 @@ configure
 *.n
 *.so
 tnm/scotty
+
+# Output of debian/build.sh
+/build/

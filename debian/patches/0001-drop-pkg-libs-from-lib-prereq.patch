@@ -1,0 +1,20 @@
+Description: Drop $(PKG_LIBS) from the shared-library Make prerequisites
+ The TEA Makefile lists $(PKG_LIBS) as a prerequisite of the shared
+ library. Under --with-tirpc that variable carries -L linker flags, so
+ GNU make tries to "build" a target literally named "-L/usr/lib/...",
+ which fails. The library still links against those flags via MAKE_LIB;
+ they do not belong in the prerequisite list.
+Author: Morten Brekkevold <morten.brekkevold@sikt.no>
+Forwarded: no
+Last-Update: 2026-06-29
+--- a/tnm/Makefile.in
++++ b/tnm/Makefile.in
+@@ -592,7 +592,7 @@
+ #========================================================================
+ 
+ # leg20170215: add PKG_LIB as dependencies to build rpc 
+-$(PKG_LIB_FILE): $(PKG_OBJECTS) $(PKG_LIBS)
++$(PKG_LIB_FILE): $(PKG_OBJECTS)
+ 	-rm -f $(PKG_LIB_FILE)
+ 	${MAKE_LIB}
+ 	$(RANLIB) $(PKG_LIB_FILE)

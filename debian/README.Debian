@@ -1,0 +1,50 @@
+scotty (tcl-tnm) for Debian
+===========================
+
+Why this package exists
+-----------------------
+ritz needs the Tnm Tcl extension ("package require Tnm"). Tnm used to reach
+Debian via the `scotty` package, but scotty was orphaned and removed from the
+archive long ago. This source package rebuilds Tnm from the actively-
+maintained FlightAware fork of scotty, as the binary package tcl-tnm, so ritz
+(and anything else needing Tnm) has a dependency to point at.
+
+Build notes / gotchas
+---------------------
+The upstream build is TEA/autoconf and predates modern toolchains. The
+packaging works around several issues; if you bump the upstream version,
+re-check these:
+
+  * configure.ac ships without a generated configure, so debian/rules runs
+    autoheader + autoconf by hand (not autoreconf -fi, which would clobber
+    the bundled TEA macros in aclocal.m4).
+
+  * Built against libtirpc (--with-tirpc); modern glibc no longer provides
+    SUN RPC. rpcgen comes from the rpcsvc-proto build-dependency.
+
+  * The SUN RPC stub objects (*_clnt.o / *_xdr.o) are referenced by the link
+    line but are not in PKG_OBJECTS, and make does not track rpcgen's
+    side-effect outputs. debian/rules pre-generates and compiles them.
+
+  * patches/0001 drops $(PKG_LIBS) from the shared library's Make
+    prerequisites (it carries -L flags under --with-tirpc).
+
+  * GCC 14+ legacy-C errors are demoted to warnings via
+    DEB_CFLAGS_MAINT_APPEND.
+
+Where things install
+--------------------
+The Tcl package lands in /usr/lib/tcltk/<multiarch>/Tnm<version>/, which is on
+Tcl's auto_path, so "package require Tnm" finds it without TCLLIBPATH. (The
+bare multiarch libdir that dh defaults to is NOT on auto_path, hence the
+explicit --libdir.) The build also produces a standalone scotty interpreter
+and nmtrapd/nmicmpd daemons; ritz does not need them, so debian/rules removes
+them (along with the section-n Tcl API man pages) before packaging.
+
+A note on 64-bit
+----------------
+Upstream documents known bugs in scotty's SNMP and frozen-MIB code paths on
+64-bit platforms. ritz only uses Tnm's MIB symbol translation, which works
+correctly; heavy live-SNMP use of this build on 64-bit is not guaranteed.
+
+ -- Morten Brekkevold <morten.brekkevold@sikt.no>

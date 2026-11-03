@@ -1,0 +1,11 @@
+scotty (3.1.4-1) UNRELEASED; urgency=medium
+
+  * Initial packaging of the Tnm SNMP/MIB Tcl extension as the tcl-tnm binary,
+    built from the FlightAware fork of scotty, to provide the "Tnm" Tcl
+    package required by ritz. Debian removed the historical scotty package
+    long ago.
+  * Upstream 3.1.4 carries the Tcl 9 port (int -> Tcl_Size), but keeps a
+    compatibility shim, so it still builds against Tcl 8.6. Ritz needs 8.6,
+    because Tix requires Tk 8.6.
+
+ -- Morten Brekkevold <morten.brekkevold@sikt.no>  Tue, 03 Nov 2026 12:00:00 +0100

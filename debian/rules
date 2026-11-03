@@ -1,0 +1,75 @@
+#!/usr/bin/make -f
+
+# Defines CC, so the flag probe below asks the compiler that will do the build.
+include /usr/share/dpkg/buildtools.mk
+# Defines DEB_VERSION_UPSTREAM, which names the versioned Tnm install dir.
+include /usr/share/dpkg/pkg-info.mk
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# Tnm is decades-old, pre-C99 C. GCC 14 promotes several legacy constructs to
+# hard errors, so demote them back to warnings.
+#
+# The flags have to be probed rather than listed: GCC 13, which is what Ubuntu
+# 24.04 ships, knows neither -Wreturn-mismatch nor
+# -Wdeclaration-missing-parameter-type and rejects the entire command line when
+# they appear, so hardcoding them makes the package unbuildable on every
+# release older than GCC 14. Those releases do not error on the constructs in
+# the first place, so dropping the flags there is correct and not a workaround.
+LEGACY_C_ERRORS = \
+	implicit-int \
+	implicit-function-declaration \
+	int-conversion \
+	incompatible-pointer-types \
+	return-mismatch \
+	declaration-missing-parameter-type
+
+cc_accepts = $(shell echo 'int main(void){return 0;}' | \
+	$(CC) $(1) -x c - -o /dev/null >/dev/null 2>&1 && echo $(1))
+
+export DEB_CFLAGS_MAINT_APPEND := \
+	$(foreach w,$(LEGACY_C_ERRORS),$(call cc_accepts,-Wno-error=$(w)))
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+%:
+	dh $@ --sourcedirectory=tnm
+
+# The tree ships configure.ac but no configure. Generate it ourselves rather
+# than let dh_autoreconf run "autoreconf -fi", which would regenerate
+# aclocal.m4 and break the bundled TEA macros.
+override_dh_autoreconf:
+	cd tnm && autoheader && autoconf
+
+override_dh_auto_configure:
+	# Install into the multiarch tcltk dir, which is on Tcl's auto_path (the
+	# bare multiarch libdir dh defaults to is not), so "package require Tnm"
+	# resolves. TEA bakes this same path into the library as TNMLIB.
+	dh_auto_configure -- \
+		--libdir=/usr/lib/tcltk/$(DEB_HOST_MULTIARCH) \
+		--with-tcl=/usr/lib/tcl8.6 \
+		--with-tk=/usr/lib/tk8.6 \
+		--with-tirpc
+
+# The SUN RPC stubs are produced by rpcgen, but make does not track its
+# side-effect *_clnt.c / *_xdr.c outputs, and the rpc objects are not listed
+# in PKG_OBJECTS even though the link line references them. Generate and
+# compile them up front so they exist on disk when the shared library links.
+override_dh_auto_build:
+	cd tnm && for x in ether mount pcnfsd rstat; do cp generic/$$x.x .; rpcgen $$x.x; done
+	cd tnm && make ether_clnt.o ether_xdr.o mount_clnt.o mount_xdr.o \
+		pcnfsd_clnt.o pcnfsd_xdr.o rstat_clnt.o rstat_xdr.o
+	dh_auto_build
+
+TNMDIR = debian/tcl-tnm/usr/lib/tcltk/$(DEB_HOST_MULTIARCH)/Tnm$(DEB_VERSION_UPSTREAM)
+
+# ritz only needs the Tnm Tcl library, so drop the standalone scotty
+# interpreter and the nmtrapd/nmicmpd daemons (they also carry RUNPATH and
+# no-manual-page lintian tags), the section-n Tcl API man pages (lintian
+# rejects man/mann), the stray in-tree READMEs and the empty directories.
+execute_after_dh_auto_install:
+	rm -rf debian/tcl-tnm/usr/bin
+	rm -rf debian/tcl-tnm/usr/share/man
+	rm -f  $(TNMDIR)/agents/README $(TNMDIR)/library/README
+	rm -rf $(TNMDIR)/site
+	rm -rf debian/tcl-tnm/usr/include

@@ -1,0 +1,8 @@
+# This package targets a private/custom Debian deployment, not the Debian
+# archive, so there is no ITP bug for an initial upload to close.
+tcl-tnm: initial-upload-closes-no-bugs
+
+# "currupted" is a typo in an upstream diagnostic string. Fixing it would mean
+# patching upstream C for no functional gain. Only some lintian versions
+# report it, so it shows up unevenly across target suites.
+tcl-tnm: spelling-error-in-binary
