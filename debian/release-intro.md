@@ -3,3 +3,5 @@ Debian and Ubuntu packages for the **Tnm** Tcl extension, built from the
 
 You normally do not install this directly: `apt install ritz` pulls it in. See
 [ritz-debian](https://github.com/Uninett/ritz-debian) for the client itself.
+
+Built for amd64 only.

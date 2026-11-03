@@ -42,7 +42,7 @@ curl -fsSL https://api.github.com/repos/Uninett/scotty-debian/releases/latest \
 sudo apt install ./tcl-tnm_*.deb
 ```
 
-Only amd64 is built.
+Built for amd64 only.
 
 ## Building it yourself
 
