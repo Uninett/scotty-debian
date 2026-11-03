@@ -14,7 +14,14 @@ SUITE_TAG="$(echo "$SUITE" | tr ':/' '--')"
 TAG="scotty-debdev:$SUITE_TAG"
 cd "$(dirname "$0")/.."
 
-if [ -n "$NONINTERACTIVE" ]; then TTYARGS="--tty"; else TTYARGS="--tty --interactive"; fi
+# Only allocate a TTY when there actually is one. "docker run -it" dies on a
+# CI runner with "cannot attach stdin to a TTY-enabled container because
+# stdin is not a terminal", and a lone --tty just litters logs with \r.
+if [ -n "$NONINTERACTIVE" ] || [ ! -t 0 ]; then
+    TTYARGS=
+else
+    TTYARGS="--tty --interactive"
+fi
 if [ -n "$AS_ROOT" ]; then USERARGS=""; else USERARGS="--user $(id -u):$(id -g)"; fi
 
 DOCKER_BUILDKIT=1 docker build -t "$TAG" --build-arg "BASE_IMAGE=$SUITE" -f debian/Dockerfile .
